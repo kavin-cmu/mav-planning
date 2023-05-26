@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="maze_wall_short">
+    <static>true</static>
+    <link name="link">
+      <pose>0 0 4 0 0 0</pose>
+      <collision name="collision_s">
+        <geometry>
+          <box>
+            <size>15 0.8 8</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual_s">
+<!--        <cast_shadows>false</cast_shadows>-->
+        <geometry>
+          <box>
+            <size>15 0.8 8</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>model://maze_wall_short/materials/scripts</uri>
+            <uri>model://maze_wall_short/materials/textures</uri>
+            <name>vrc/maze_wall_short</name>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

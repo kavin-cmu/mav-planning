@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <model name="maze_wall_low">
+    <static>true</static>
+    <link name="lowlink">
+      <pose>0 0 2 0 0 0</pose>
+      <collision name="collision_l">
+        <geometry>
+          <box>
+            <size>15 0.8 4</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="visual_l">
+        <geometry>
+          <box>
+            <size>15 0.8 4</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Blue</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

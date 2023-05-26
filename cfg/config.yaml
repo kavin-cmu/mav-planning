@@ -1,0 +1,38 @@
+map:
+  bounds_min: [-50, -50, 0   ]
+  bounds_max: [ 50,  50, 15.0]
+  get_from_param: false
+  obstacles: [
+              {
+                "type": 0,
+                "shape": [5.0],
+                "position": [0.0, 0.0, 0.0],
+                "rotation": [0.0, 0.0, 0.0, 1.0]
+              },
+              {
+                "type": 1,
+                "shape": [5.0],
+                "position": [0.0, 0.0, 0.0],
+                "rotation": [0.0, 0.0, 0.0, 1.0]
+              }
+              ]
+
+  random_map:
+    obs_count: 45
+    radius_min: 2.0
+    radius_max: 5.0
+
+planner:
+  plan_time: 0.20
+  auto_range: true
+  range: 10.0
+  virt_ceil_hgt: 15.0
+  ground_clearance: 3.0
+  optim:
+    en_clear_obj: false
+    k_clear: 1.0
+    k_length: 1.0
+
+octomap_interface:
+  file_name: "/home/kyouma/Downloads/fr_campus.bt"
+  map_res: 0.80
