@@ -86,6 +86,7 @@ add_executable(global_planner_node
               src/global_planner/global_planner_ros.cpp
               src/global_planner/global_planner_ros_node.cpp
               src/common/collision_geometry.cpp
+              src/common/ros/visualization.cpp
               src/common/ros/conversions.cpp
 )
 
