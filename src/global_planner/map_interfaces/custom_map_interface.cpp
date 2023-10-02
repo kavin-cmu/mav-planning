@@ -5,6 +5,10 @@ namespace mav_planning
 {
     void Custom3DMap::addObstacle(const CollisionGeometry& obs)
     {
+        if(obs.getType()==CollisionGeometry::Type::INVALID)
+        {
+            ERROR(_name, "Invalid obstacle! Skipping...");
+        }
         _obstacles.push_back(obs);
     }
 
@@ -19,33 +23,37 @@ namespace mav_planning
         return _obstacles.size();
     }
 
-    float Custom3DMap::getMinClearance(const CollisionGeometry& shape)
+    double Custom3DMap::getMinClearance(const SE3State& state)
     {
-        fcl::DistanceRequest<float> requestType;
-        fcl::DistanceResult<float> distanceResult;
+        
+        updateMAVState(state);
+        
+        fcl::DistanceRequest<double> requestType;
+        fcl::DistanceResult<double> distanceResult;
 
-        float min_dist = std::numeric_limits<float>::max();
+        double min_dist = std::numeric_limits<double>::max();
                 
         for(CollisionGeometry obs : _obstacles)
         {   
-            fcl::distance(shape.getCollisionObject().get(), obs.getCollisionObject().get(), requestType, distanceResult);
+            fcl::distance(_mav_shape.getCollisionObject().get(), obs.getCollisionObject().get(), requestType, distanceResult);
             min_dist = std::min(min_dist, distanceResult.min_distance);
         }
 
         return min_dist;
     }
 
-    bool Custom3DMap::checkCollision(const CollisionGeometry& shape)
+    bool Custom3DMap::checkCollision(const SE3State& state)
     {   
+        updateMAVState(state);
 
-        fcl::CollisionRequest<float> colRequest(1,false,1,false);
-        fcl::CollisionResult<float> colResult;
+        fcl::CollisionRequest<double> colRequest(1,false,1,false);
+        fcl::CollisionResult<double> colResult;
 
         bool has_collided = false;
 
         for(CollisionGeometry obs : _obstacles)
         {  
-            fcl::collide(shape.getCollisionObject().get(), obs.getCollisionObject().get(), colRequest, colResult);
+            fcl::collide(_mav_shape.getCollisionObject().get(), obs.getCollisionObject().get(), colRequest, colResult);
             has_collided = colResult.isCollision();
             
             if(has_collided)
@@ -65,7 +73,6 @@ namespace mav_planning
 
     std::pair<Point, Point> Custom3DMap::getMapBounds()
     {
-        
         return _bounds;
     }
 
@@ -82,7 +89,7 @@ namespace mav_planning
 
         if (!fh)
         {
-            std::cout << "Map data file not created!\n";
+            ERROR(_name,"Map data file not created!");
         }
         else
         {   
@@ -92,7 +99,7 @@ namespace mav_planning
             {   
                 obs.print(fh);
             }
-            std::cout << "Map data file created succesfully!\n";
+            INFO(_name, "Map data file created succesfully!");
             fh.close();
         }
     }
@@ -101,35 +108,35 @@ namespace mav_planning
     {   
         std::random_device rd;
 
-        std::uniform_real_distribution<float> unif_x(_bounds.first[0], _bounds.second[0]);
-        std::uniform_real_distribution<float> unif_y(_bounds.first[1], _bounds.second[1]);
-        std::uniform_real_distribution<float> unif_z(_bounds.first[2], _bounds.second[2]);
-        std::uniform_real_distribution<float> unif_r(params.min_radius, params.max_radius); 
+        std::uniform_real_distribution<double> unif_x(_bounds.first[0], _bounds.second[0]);
+        std::uniform_real_distribution<double> unif_y(_bounds.first[1], _bounds.second[1]);
+        std::uniform_real_distribution<double> unif_z(_bounds.first[2], _bounds.second[2]);
+        std::uniform_real_distribution<double> unif_r(params.min_radius, params.max_radius); 
         
         std::default_random_engine re(rd());
 
-        float z_clearance = _bounds.second[2]-_bounds.first[2];
+        double z_clearance = _bounds.second[2]-_bounds.first[2];
 
         for(size_t i=0; i< params.count/3; i++)
         {
-            addObstacle(CollisionGeometry(CollisionGeometry::GeometryType::CYLINDER,
+            addObstacle(CollisionGeometry(CollisionGeometry::Type::CYLINDER,
                         Point({unif_x(re),unif_y(re), 0.5*z_clearance}),
                         Quaternion(Eigen::AngleAxisd(0.0, Point::UnitZ())),
-                        std::vector<float>({unif_r(re), z_clearance})));
+                        std::vector<double>({unif_r(re), z_clearance})));
         }
         for(size_t i=0; i< params.count/3; i++)
         {
-            addObstacle(CollisionGeometry(CollisionGeometry::GeometryType::BOX,
+            addObstacle(CollisionGeometry(CollisionGeometry::Type::BOX,
                         Point({unif_x(re),unif_y(re), 0.5*z_clearance}),
                         Quaternion(Eigen::AngleAxisd(0.0, Point::UnitZ())),
-                        std::vector<float>({unif_r(re), unif_r(re), z_clearance})));
+                        std::vector<double>({unif_r(re), unif_r(re), z_clearance})));
         }
         for(size_t i=0; i< params.count/3; i++)
         {   
-            addObstacle(CollisionGeometry(CollisionGeometry::GeometryType::SPHERE,
+            addObstacle(CollisionGeometry(CollisionGeometry::Type::SPHERE,
                         Point({unif_x(re), unif_y(re), unif_z(re)}),
                         Quaternion(Eigen::AngleAxisd(0.0, Point::UnitZ())),
-                        std::vector<float>({unif_r(re)})));
+                        std::vector<double>({unif_r(re)})));
         }
     }
 

@@ -29,7 +29,7 @@ void FlatMAVStateSpace::registerProjections(void) {
     virtual void project(const ob::State *state, Eigen::Ref<Eigen::VectorXd> projection) const
     {
         projection = Eigen::Map<const Eigen::VectorXd>(state->as<FlatMAVStateSpace::StateType>()->as<ob::RealVectorStateSpace::StateType>(0)->values, 3);
-//      memcpy(&projection(0), state->as<FlatMAVStateSpace::StateType>()->as<ob::RealVectorStateSpace::StateType>(0)->values, 3 * sizeof(float));
+        memcpy(&projection(0), state->as<FlatMAVStateSpace::StateType>()->as<ob::RealVectorStateSpace::StateType>(0)->values, 3 * sizeof(double));
     }
   };
 

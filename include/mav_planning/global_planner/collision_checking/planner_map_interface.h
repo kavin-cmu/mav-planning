@@ -2,6 +2,7 @@
 #define GLOBAL_PLANNER_COLLISION_CHECKING_PLANNER_MAP_INTERFACE
 
 #include <mav_planning/common/common.h>
+#include <mav_planning/common/logging.h>
 #include <mav_planning/common/collision_geometry.h>
 
 #include "../state_spaces/FlatMAVStateSpace.h"
@@ -20,9 +21,9 @@ namespace mav_planning
     {
         public:
             
-            enum MapType {CUSTOM3D, OPENVDB, OCTOMAP, VOXBLOX, GRIDMAP};
+            enum Type {CUSTOM3D, OPENVDB, OCTOMAP, VOXBLOX, GRIDMAP};
             
-            PlannerMapInterface(MapType type);     
+            PlannerMapInterface(Type type);     
             
             ~PlannerMapInterface(void){};
 
@@ -32,21 +33,23 @@ namespace mav_planning
             
             void setMAVShape(CollisionGeometry mav_shape);
             CollisionGeometry getMAVShape();
-            void updateMAVState(const ob::State* state);
+            void updateMAVState(const SE3State& state);
             std::pair<Point, Point> getMapBounds(){return _bounds;}
-            MapType getMapType();
+            Type getType();
+            void lockMap();
+            void unlockMap();
             
-            virtual bool checkCollision(const CollisionGeometry& shape){};
-            virtual float getMinClearance(const CollisionGeometry& shape){};
+            virtual bool checkCollision(const SE3State& state){};
+            virtual double getMinClearance(const SE3State& state){};
+            virtual double getTerrainHeight(const SE3State& state){};
             virtual void setMapBounds(const std::pair<Point, Point>& bounds){};
         
         protected:
-            MapType _type;
+            Type _type;
             std::pair<Point, Point> _bounds;
             bool _has_bounds = false;
-        
-        private:
             CollisionGeometry _mav_shape;
+            bool _map_locked = false;
                     
     };
 

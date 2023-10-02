@@ -2,6 +2,7 @@
 #define MAV_OMPL_PLANNING_OMPL_INTERFACE_MULTI_OPTIMISATION_OBJECTIVE
 
 #include "../state_spaces/FlatMAVStateSpace.h"
+#include <mav_planning/common/logging.h>
 #include <ompl/base/SpaceInformation.h>
 #include <ompl/base/OptimizationObjective.h>
 #include <ompl/base/objectives/PathLengthOptimizationObjective.h>
@@ -15,7 +16,7 @@ namespace mav_planning
     struct PlannerOptimParams
     {  
         bool en_clearance;
-        float k_clearance, k_path_length;
+        double k_clearance, k_path_length;
     };
 
     class ClearanceObjective : public ob::StateCostIntegralObjective

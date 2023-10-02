@@ -3,7 +3,20 @@
 namespace mav_planning
 {   
     namespace convert
-    {
+    {   
+
+        SE3State toSE3State(const geometry_msgs::Pose& msg)
+        {
+            SE3State state;
+
+            state.position[0] = msg.position.x;
+            state.position[1] = msg.position.y;
+            state.position[2] = msg.position.z;
+            state.rotation    = toEigenQuat(msg.orientation);
+
+            return state;
+        }
+
         geometry_msgs::Pose toPoseMsg(const Point& pos, const Quaternion& rot)
         {   
             geometry_msgs::Pose msg;
@@ -19,127 +32,106 @@ namespace mav_planning
             return msg;
         }
 
-        geometry_msgs::Pose toPoseMsg(const FlatMAVState& state)
+        geometry_msgs::Pose toPoseMsg(const SE3State& state)
         {
-            Quaternion q(Eigen::AngleAxisd(state[3], Point::UnitZ()));
-            Point p = {state[0], state[1], state[2]};
+            Point p = state.position;
+            Quaternion q = state.rotation;
 
             return toPoseMsg(p, q);
         }
+        
 
-        visualization_msgs::Marker toMarkerMsg(const CollisionGeometry& geom)
+        Eigen::Vector3d toEulerRPY(const Quaternion& quat)
         {
-            visualization_msgs::Marker msg;
-
-            msg.header.frame_id = "map";
-            msg.header.stamp = ros::Time::now();
-            msg.action = visualization_msgs::Marker::ADD;
-            msg.ns = "map";
-            msg.color.r = 0.5;
-            msg.color.g = 0.5;
-            msg.color.b = 0.5;
-            msg.color.a = 0.90;
-
-            msg.pose = toPoseMsg(geom.getTranslation(), geom.getOrientation());
-            
-            CollisionGeometry::GeometryType type = geom.getType();
-
-            auto shape = geom.getShape();
-            
-            switch(type)
-            {   
-                case CollisionGeometry::GeometryType::SPHERE:
-                {
-                    msg.type = visualization_msgs::Marker::SPHERE;
-                    msg.scale.x = 2*shape[0];
-                    msg.scale.y = 2*shape[0]; 
-                    msg.scale.z = 2*shape[0]; 
-                    break;
-                }
-
-                case CollisionGeometry::GeometryType::BOX:
-                {
-                    msg.type = visualization_msgs::Marker::CUBE;
-                    msg.scale.x = shape[0];
-                    msg.scale.y = shape[1]; 
-                    msg.scale.z = shape[2]; 
-                    break;
-                }
-
-                case CollisionGeometry::GeometryType::CYLINDER:
-                {
-                    msg.type = visualization_msgs::Marker::CYLINDER;
-                    msg.scale.x = 2*shape[0];
-                    msg.scale.y = 2*shape[0]; 
-                    msg.scale.z =   shape[1]; 
-                    break;
-                }
-
-                case CollisionGeometry::GeometryType::ELLIPSOID:
-                {
-                    msg.type = visualization_msgs::Marker::SPHERE;
-                    msg.scale.x = 2*shape[0];
-                    msg.scale.y = 2*shape[1]; 
-                    msg.scale.z = 2*shape[2]; 
-                    break;
-                }
-                
-                default:
-                {
-                    break;
-                }
-            }
-
-            return msg;
+            return quat.toRotationMatrix().eulerAngles(0,1,2);
         }
 
-        visualization_msgs::MarkerArray toMarkerArrayMsg(const FlatMAVStateList& path)
+        Quaternion toEigenQuat(const geometry_msgs::Quaternion& quat)
         {
-            visualization_msgs::Marker path_msg, pts_msg;
-            visualization_msgs::MarkerArray comb_msg;
+            Quaternion q;
 
-            path_msg.header.frame_id = pts_msg.header.frame_id = "map";
-            path_msg.header.stamp = pts_msg.header.stamp = ros::Time::now();
-            path_msg.action = pts_msg.action = visualization_msgs::Marker::ADD;
+            q.x() = quat.x;
+            q.y() = quat.y;
+            q.z() = quat.z;
+            q.w() = quat.w;
 
-            pts_msg.type  = visualization_msgs::Marker::SPHERE;
-            path_msg.type = visualization_msgs::Marker::LINE_STRIP;
-            
-            path_msg.ns = "path";
-            pts_msg.ns = "points";
-            
-            path_msg.id = 0;
-
-            path_msg.color.r = 1.0;
-            pts_msg.color.g  = 1.0;
-            path_msg.color.a = pts_msg.color.a = 1.0;
-
-            path_msg.scale.x = 0.25;
-            
-            pts_msg.scale.x = path_msg.scale.x;
-            pts_msg.scale.y = path_msg.scale.x;
-            pts_msg.scale.z = path_msg.scale.x;
-
-            size_t cnt = 0;
-            for(auto pts : path)
-            {   
-                geometry_msgs::Pose pose = toPoseMsg(pts);
-
-                path_msg.points.push_back(pose.position);
-                pts_msg.pose = pose;
-                pts_msg.id = cnt;
-                comb_msg.markers.push_back(pts_msg);
-
-                cnt++;
-            }
-
-            comb_msg.markers.push_back(path_msg);
-            return comb_msg;
+            return q;
         }
 
-        Quaternion toEigenQuat(const float& yaw)
+        Quaternion toEigenQuat(const double& yaw)
         {
             return Quaternion(Eigen::AngleAxisd(yaw, Point::UnitZ()));
+        }
+
+        Quaternion toEigenQuat(const double& roll, const double& pitch, const double& yaw)
+        {
+            Quaternion quat =  Eigen::AngleAxisd(roll, Point::UnitX())*
+                               Eigen::AngleAxisd(pitch, Point::UnitY())*
+                               Eigen::AngleAxisd(yaw, Point::UnitZ());
+
+            return quat;
+
+        }
+
+        bool toCollisionGeometry(XmlRpc::XmlRpcValue& param, CollisionGeometry& shape)
+        {   
+            if(!param.hasMember("type") || !param.hasMember("size") || !param.hasMember("center") || !param.hasMember("rpy"))
+            {
+                ROS_ERROR("[toCollisionGeometry] Incorrect parameter structure!");
+                return false;
+            }
+            else
+            {
+                if(param["type"].getType()!=XmlRpc::XmlRpcValue::Type::TypeInt ||
+                (param["size"].getType()!=XmlRpc::XmlRpcValue::Type::TypeArray || param["size"].size()!=3)  ||
+                (param["center"].getType()!=XmlRpc::XmlRpcValue::Type::TypeArray || param["center"].size()!=3)  ||
+                (param["rpy"].getType()!=XmlRpc::XmlRpcValue::Type::TypeArray || param["rpy"].size()!=3))
+                {
+                    ROS_ERROR("[toCollisionGeometry] Incorrect parameter structure!");
+                    return false;
+                }
+                else
+                {   
+                    std::vector<double> size;
+                    Point pos;
+                    Quaternion quat;
+                    
+                    size.resize(param["size"].size());
+
+                    for(unsigned i = 0; i<param["size"].size(); i++)
+                    {
+                        size[i] = (double) static_cast<double>(param["size"][i]);
+                    }
+
+                    for(unsigned i = 0; i< 3; i++)
+                    {
+                        pos[i] = static_cast<double>(param["center"][i]);
+                    }
+
+                    quat =  toEigenQuat((double) static_cast<double>(param["rpy"][0]),
+                                        (double) static_cast<double>(param["rpy"][1]),
+                                        (double) static_cast<double>(param["rpy"][2]));
+
+                    auto type_enum = static_cast<CollisionGeometry::Type>(static_cast<int>(param["type"]));
+
+                    switch(type_enum)
+                    {   
+                        case CollisionGeometry::Type::SPHERE:
+                        case CollisionGeometry::Type::BOX:
+                        case CollisionGeometry::Type::CYLINDER:
+                        case CollisionGeometry::Type::ELLIPSOID:
+                            shape = CollisionGeometry(type_enum, pos, quat, size);
+                            break;
+
+                        default:
+                            ROS_ERROR("[toCollisionGeometry] Invalid geometry type!");
+                            break;
+                        
+                    }
+
+                    return true;
+                }
+            }
         }
     }   
 }

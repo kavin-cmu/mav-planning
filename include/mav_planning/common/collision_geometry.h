@@ -1,7 +1,9 @@
-#ifndef MAP_INTERFACES_COLLISION_INTERFACE_COLLISION_GEOMETRY
-#define MAP_INTERFACES_COLLISION_INTERFACE_COLLISION_GEOMETRY
+#ifndef MAV_PLANNING_COMMON_COLLISION_GEOMETRY
+#define MAV_PLANNING_COMMON_COLLISION_GEOMETRY
 
 #include <mav_planning/common/common.h>
+#include <mav_planning/common/logging.h>
+
 
 #include <fcl/fcl.h>
 #include <fcl/config.h>
@@ -10,14 +12,21 @@
 
 
 namespace mav_planning
-{
+{   
+    struct AABBox
+    {
+        Point min;
+        Point max;
+    };
+
+
     class CollisionGeometry
     {
         public:
-            enum GeometryType{SPHERE, BOX, CYLINDER, ELLIPSOID};
+            enum Type{SPHERE, BOX, CYLINDER, ELLIPSOID, INVALID};
 
-            CollisionGeometry(GeometryType type, Point position,
-                              Quaternion orientation, std::vector<float> shape);
+            CollisionGeometry(Type type, Point position,
+                              Quaternion orientation, std::vector<double> shape);
             
             CollisionGeometry();
             
@@ -25,15 +34,18 @@ namespace mav_planning
             void setOrientation(const Quaternion& orientation);
             Point getTranslation() const;
             Quaternion getOrientation() const;
-            GeometryType getType() const;
-            std::vector<float> getShape() const;
-            std::shared_ptr<fcl::CollisionObjectf> getCollisionObject() const;
+            Type getType() const;
+            std::vector<double> getShape() const;
+            std::shared_ptr<fcl::CollisionObjectd> getCollisionObject() const;
+            std::vector<Point> getAABBoxVerts(fcl::AABBd& aabb);
+            AABBox getAABB();
+            fcl::OBBd getOBB();
             void print(std::ostream& os) const;
 
         private:
-            GeometryType _type;
-            std::vector<float> _shape;
-            std::shared_ptr<fcl::CollisionObjectf> _collision_obj;
+            Type _type = Type::INVALID;
+            std::vector<double> _shape;
+            std::shared_ptr<fcl::CollisionObjectd> _collision_obj = NULL;
             Point _position;
             Quaternion _orientation;
     };
@@ -41,4 +53,4 @@ namespace mav_planning
 }
 
 
-#endif /* MAP_INTERFACES_COLLISION_INTERFACE_COLLISION_GEOMETRY */
+#endif /* MAV_PLANNING_COMMON_COLLISION_GEOMETRY */

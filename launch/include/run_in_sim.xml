@@ -1,0 +1,47 @@
+<launch>
+    <!-- size of map, change the size inflate x, y, z according to your application -->
+    <arg name="drone_id" default="0"/>
+    <arg name="map_size_x"/>
+    <arg name="map_size_y"/>
+    <arg name="map_size_z"/>
+    <arg name="init_x"/>
+    <arg name="init_y"/>
+    <arg name="init_z"/>
+    <arg name="flight_type" default="2"/>
+    <arg name="point_num" default="1"/>
+    <arg name="target0_x" default="0.0"/>
+    <arg name="target0_y" default="0.0"/>
+    <arg name="target0_z" default="0.0"/>
+    <arg name="target1_x" default="0.0"/>
+    <arg name="target1_y" default="0.0"/>
+    <arg name="target1_z" default="0.0"/>
+    <arg name="target2_x" default="0.0"/>
+    <arg name="target2_y" default="0.0"/>
+    <arg name="target2_z" default="0.0"/>
+    <arg name="target3_x" default="0.0"/>
+    <arg name="target3_y" default="0.0"/>
+    <arg name="target3_z" default="0.0"/>
+    <arg name="target4_x" default="0.0"/>
+    <arg name="target4_y" default="0.0"/>
+    <arg name="target4_z" default="0.0"/>
+    <!-- topic of your odometry such as VIO or LIO -->
+    <arg name="odom_topic"/>
+
+    <!-- use simulator -->
+    <include file="$(find mav_planning)/launch/include/simulator.xml">
+        <arg name="drone_id" value="$(arg drone_id)"/>
+        <arg name="map_size_x_" value="$(arg map_size_x)"/>
+        <arg name="map_size_y_" value="$(arg map_size_y)"/>
+        <arg name="map_size_z_" value="$(arg map_size_z)"/>
+        <arg name="init_x_" value="$(arg init_x)"/>
+        <arg name="init_y_" value="$(arg init_y)"/>
+        <arg name="init_z_" value="$(arg init_z)"/>
+        <arg name="odometry_topic" value="$(arg odom_topic)" />
+    </include>
+    
+    <include file="$(find manual_take_over)/launch/take_over_drone.launch">
+        <arg name="drone_id" value="$(arg drone_id)"/>
+        <arg name="cmd_topic" value="drone_$(arg drone_id)_planning/pos_cmd"/>
+    </include>
+</launch>
+    

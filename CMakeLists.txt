@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   octomap_ros
   octomap_msgs
+  quadrotor_msgs
 )
 
 
@@ -36,7 +37,7 @@ find_package(dynamicEDT3D REQUIRED)
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES ${PROJECT_NAME}_library
- CATKIN_DEPENDS geometry_msgs nav_msgs octomap_msgs roscpp rospy sensor_msgs std_msgs tf2 tf2_ros visualization_msgs octomap_ros octomap_msgs
+ CATKIN_DEPENDS geometry_msgs nav_msgs octomap_msgs roscpp rospy sensor_msgs std_msgs tf2 tf2_ros visualization_msgs octomap_ros octomap_msgs quadrotor_msgs
 #  DEPENDS system_lib
 )
 
@@ -81,13 +82,17 @@ add_executable(global_planner_node
               src/global_planner/map_interfaces/custom_map_interface.cpp
               src/global_planner/map_interfaces/octomap_interface.cpp
               src/global_planner/optimization_objectives/multi_optimisation_objective.cpp
-              src/global_planner/state_spaces/FlatMAVStateSpace.cpp                
+              src/global_planner/planners/RRTx.cpp
+              src/global_planner/state_spaces/FlatMAVStateSpace.cpp
+              src/global_planner/state_spaces/state_utils.cpp                
               src/global_planner/global_planner.cpp
               src/global_planner/global_planner_ros.cpp
               src/global_planner/global_planner_ros_node.cpp
               src/common/collision_geometry.cpp
               src/common/ros/visualization.cpp
               src/common/ros/conversions.cpp
+              src/common/ros/utils.cpp
+              src/common/logging.cpp
 )
 
 ## Rename C++ executable without prefix

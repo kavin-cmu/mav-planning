@@ -1,8 +1,9 @@
-#ifndef INCLUDE_MAV_PLANNING_COMMON
-#define INCLUDE_MAV_PLANNING_COMMON
+#ifndef MAV_PLANNING_COMMON_COMMON
+#define MAV_PLANNING_COMMON_COMMON
 
 #include <iostream>
-#include <ros/ros.h>
+#include <stdarg.h>
+#include <memory>
 #include <vector>
 #include <fstream>
 #include <math.h>
@@ -12,6 +13,7 @@
 #include <random>
 #include <map>
 #include <chrono>
+#include <mutex> 
 
 typedef Eigen::Vector3d Point;
 typedef Eigen::Vector4d FlatMAVState;
@@ -19,4 +21,13 @@ typedef Eigen::Quaterniond Quaternion;
 typedef std::vector<Point> PointList;
 typedef std::vector<FlatMAVState> FlatMAVStateList;
 
-#endif /* INCLUDE_MAV_PLANNING_COMMON */
+struct SE3State
+{
+    Point position;
+    Quaternion rotation;
+};
+
+typedef std::vector<SE3State> SE3StateList;
+
+
+#endif /* MAV_PLANNING_COMMON_COMMON */

@@ -6,5 +6,7 @@
     </node>
 
     <node type="rviz" name="rviz" pkg="rviz" args="-d $(find mav_planning)/rviz/config.rviz" />
+    <remap from="set_goal" to="/move_base_simple/goal"/>
+    
 
 </launch>

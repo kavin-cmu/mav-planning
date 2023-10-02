@@ -2,10 +2,12 @@
 #define MAV_PLANNING_GLOBAL_PLANNER_GLOBAL_PLANNER
 
 // Common Includes
+#include "mav_planning/common/logging.h"
 #include "state_spaces/FlatMAVStateSpace.h"
 #include "collision_checking/planner_map_interface.h"
 #include "optimization_objectives/multi_optimisation_objective.h"
 #include "collision_checking/state_validator.h"
+#include "state_spaces/state_utils.h"
 
 #include <ompl/geometric/planners/prm/LazyPRMstar.h>
 #include <ompl/geometric/planners/prm/LazyPRM.h>
@@ -16,8 +18,11 @@
 #include <ompl/geometric/planners/rrt/InformedRRTstar.h>
 #include <ompl/geometric/planners/rrt/RRTConnect.h>
 #include <ompl/geometric/planners/rrt/RRT.h>
-#include <ompl/geometric/planners/rrt/RRTsharp.h>
+#include <ompl/geometric/planners/rrt/RRTXstatic.h>
+#include <mav_planning/global_planner/planners/RRTx.h>
 #include <ompl/geometric/planners/bitstar/BITstar.h>
+// #include <ompl/geometric/planners/info>
+
 
 #include <ompl/base/StateSpace.h>
 #include <ompl/base/SpaceInformation.h>
@@ -37,42 +42,48 @@ namespace og = ompl::geometric;
 
 namespace mav_planning{
 
-enum StateSpaceType {XYZ_STATE_SPACE, FLAT_MAV_STATE_SPACE, SE3_STATE_SPACE};
-
 class GlobalPlanner{
     
     public:
-        GlobalPlanner();
+        GlobalPlanner(StateSpaceType type);
 
         ~GlobalPlanner(void) {};
 
-        enum PlannerType{RRT, RRTStar, RRTConnect, InformedRRTStar, BITStar};
+        enum Type{RRT, RRTStar, RRTConnect, InformedRRTStar, BITStar, PRMStar, RRTXStatic, ABITStar};
         
-        struct PlannerParams
+        struct Params
         {   
-            PlannerType type;
+            Type type;
             bool use_auto_range;
-            float planner_range;
-            float rewire_factor;
-            float plan_time_lim;
+            bool smoothen;
+            double planner_range;
+            double interp_resolution;
+            double rewire_factor;
+            double plan_time_lim;
+            bool use_full_plan_time;
+            bool wait_for_exact_soln;
             PlannerOptimParams optim_params;
             StateValidatorParams svc_params;
         };
 
-        void setStartState(const FlatMAVState& start);
-        void setGoalState(const FlatMAVState& goal);
+        void setStartState(const SE3State& start);
+        void setGoalState(const SE3State& goal);
+        
+        SE3State getStartState();
+        SE3State getGoalState();
 
         std::pair<Point, Point> getXYZBounds();
-        void setMAVShape(CollisionGeometry shape);
-        void setupPlanner(PlannerParams params);
-        void planPath(const FlatMAVState& start, const FlatMAVState& goal);
+        void setMAVShape(CollisionGeometry& shape);
+        void setupPlanner(Params params);
+        void planPath(const SE3State& start, const SE3State& goal);
         void registerMapInterface(std::shared_ptr<PlannerMapInterface>& map);
         void printPlanningData(std::string dir);
-        FlatMAVStateList getPlannedPath(ob::PlannerStatus& type);
+        SE3StateList getPlannedPath(ob::PlannerStatus& type);
 
     private:
         
         // Planner
+        std::string _name = "GlobalPlanner";
         size_t _dim = 3;
         ob::StateSpacePtr _space;
         std::shared_ptr<ob::RealVectorBounds> _bounds;
@@ -81,11 +92,12 @@ class GlobalPlanner{
         ob::ScopedStatePtr _start, _goal;
         ob::ProblemDefinitionPtr _pdef;
         ob::PlannerPtr _planner;
-        FlatMAVStateList _path, _path_prev, _path_approx;
+        SE3StateList _path, _path_prev, _path_approx;
         ob::PathPtr _path_ptr;
-        PlannerParams _params;
+        Params _params;
         bool _has_exact_soln = false;
         ob::PlannerStatus _soln_type;
+        StateSpaceType _spaceType;
 
         // Collision Checking Interface
         std::shared_ptr<PlannerMapInterface> _map;
@@ -94,6 +106,7 @@ class GlobalPlanner{
         bool hasExactSolutionPTC();
         void setXYZBounds(const std::pair<Point, Point>& bounds);
         void intermediateSolnCB(const ob::Planner* planner, const std::vector<const ob::State *>& states, ob::Cost cost);
+        void constrainState(SE3State& state);
 };
 
 }

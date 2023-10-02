@@ -5,15 +5,15 @@ map:
   obstacles: [
               {
                 "type": 0,
-                "shape": [5.0],
-                "position": [0.0, 0.0, 0.0],
-                "rotation": [0.0, 0.0, 0.0, 1.0]
+                "size": [25.0, 0.0, 0.0],
+                "center": [0.0, 0.0, 25.0],
+                "rpy": [0.0, 0.0, 0.0]
               },
               {
                 "type": 1,
-                "shape": [5.0],
-                "position": [0.0, 0.0, 0.0],
-                "rotation": [0.0, 0.0, 0.0, 1.0]
+                "size": [50.0, 50.0, 150.0],
+                "center": [100.0, 0.0, 75.0],
+                "rpy": [0.0, 0.0, 0.0]
               }
               ]
 
@@ -23,16 +23,51 @@ map:
     radius_max: 5.0
 
 planner:
-  plan_time: 0.20
-  auto_range: true
-  range: 10.0
-  virt_ceil_hgt: 15.0
-  ground_clearance: 3.0
+  # 0 - RRT 
+  # 1 - RRTStar
+  # 2 - RRTConnect
+  # 3 - InformedRRTStar
+  # 4 - BITStar
+  # 5 - PRMStar
+  # 6 - RRTXStatic
+  type: 4
+  
+  # 0 - R^3
+  # 1 - R^3 x SO(2)
+  # 2 - R^3 x SO(3)
+  state_space: 0
+  state_interp_res: 0.30
+  plan_time: 0.40
+  use_full_planning_time: false
+  wait_for_exact_soln: true
+  smoothen: false
+  auto_range: false
+  range: 5.0
+  virt_ceil_hgt: 10.0
+  ground_clearance: 0.0
   optim:
     en_clear_obj: false
     k_clear: 1.0
     k_length: 1.0
+  
+  # mav_shape:  {
+  #               "type": 3,
+  #               "size": [5.0, 1.0, 1.0],
+  #               "center": [0.0, 0.0, 0.0],
+  #               "rpy": [0.0, 0.0, 0.0]
+  #             }
+
+  mav_shape:  {
+                "type": 0,
+                "size": [0.50, 1.0, 1.0],
+                "center": [0.0, 0.0, 0.0],
+                "rpy": [0.0, 0.0, 0.0]
+              }
+
+
+  goal_z: 2.0
+  start_z: 2.0
+
 
 octomap_interface:
-  file_name: "/home/kyouma/Downloads/fr_campus.bt"
-  map_res: 0.80
+  map_res: 0.50

@@ -1,7 +1,7 @@
-#ifndef MAV_PLANNING_OMPL_INTERFACE_STATE_VALIDATOR
-#define MAV_PLANNING_OMPL_INTERFACE_STATE_VALIDATOR
+#ifndef GLOBAL_PLANNER_COLLISION_CHECKING_STATE_VALIDATOR
+#define GLOBAL_PLANNER_COLLISION_CHECKING_STATE_VALIDATOR
 
-#include "../state_spaces/FlatMAVStateSpace.h"
+#include "../state_spaces/state_utils.h"
 #include "planner_map_interface.h"
 
 #include <ompl/base/SpaceInformation.h>
@@ -15,40 +15,47 @@ namespace mav_planning
 {
     struct StateValidatorParams
     {  
-        float virtual_ceiling;
-        float ground_clearance;
+        double virtual_ceiling;
+        double ground_clearance;
     };
 
     class StateValidator : public ob::StateValidityChecker
     {
         public:
-            StateValidator(const ob::SpaceInformationPtr& si, const std::shared_ptr<PlannerMapInterface>& ptr, const StateValidatorParams& params) :
-                ob::StateValidityChecker(si) {
-                    _map_ptr = ptr;
-                    _params = params;
-                }
+            StateValidator(const ob::SpaceInformationPtr& si, const std::shared_ptr<PlannerMapInterface>& ptr, 
+                           const StateValidatorParams& params, const StateSpaceType& spaceType) :
+            ob::StateValidityChecker(si) 
+            {
+                _map_ptr = ptr;
+                _params = params;
+                _type = spaceType;
+            }
         
             bool isValid(const ob::State *state) const
             {  
-                float state_z = state->as<FlatMAVStateSpace::StateType>()->getZ();
+                SE3State eig_state;
+                convert::fromOMPLState(std::make_shared<ob::ScopedState<>>(si_->getStateSpace(), state), eig_state, _type);
 
-                if( state_z < _params.ground_clearance || state_z > _params.virtual_ceiling)
+                // terrain clearance checks
+                if(eig_state.position[2]>_params.virtual_ceiling || eig_state.position[2]<_params.ground_clearance)
                 {
                     return false;
                 }
-                    _map_ptr->updateMAVState(state);
-                    return !_map_ptr->checkCollision(_map_ptr->_mav_shape);
+
+                return !_map_ptr->checkCollision(eig_state);
             }
 
             double clearance(const ob::State *state) const
             {   
-                _map_ptr->updateMAVState(state);
-                return _map_ptr->getMinClearance(_map_ptr->_mav_shape);
+                SE3State eig_state;
+                convert::fromOMPLState(std::make_shared<ob::ScopedState<>>(si_->getStateSpace(), state), eig_state, _type);
+                return _map_ptr->getMinClearance(eig_state);
             }
         
         private:
             std::shared_ptr<PlannerMapInterface> _map_ptr;
             StateValidatorParams _params;
+            StateSpaceType _type;
     };
 
 }
@@ -56,4 +63,4 @@ namespace mav_planning
 
 
 
-#endif /* MAV_PLANNING_OMPL_INTERFACE_STATE_VALIDATOR */
+#endif /* GLOBAL_PLANNER_COLLISION_CHECKING_STATE_VALIDATOR */

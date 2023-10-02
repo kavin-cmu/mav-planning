@@ -1,0 +1,12 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/kyouma/dev/main/office_ws/devel/lib/python3/dist-packages",
+        "/home/kyouma/dev/main/core_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/kyouma/dev/main/office_ws/devel/lib/python3/dist-packages",
+        "/home/kyouma/dev/main/core_ws/devel/lib/python3/dist-packages",
+        "/opt/ros/noetic/lib/python3/dist-packages"
+    ]
+}

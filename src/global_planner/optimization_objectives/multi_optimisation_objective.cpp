@@ -14,11 +14,11 @@ namespace mav_planning
         if(params.en_clearance)
         {   
             opt->addObjective(clearObj, params.k_clearance);
-            std::cout<<"[GlobalPlanner::MultiCostObjective] Clearance objective enabled!\n";
+            INFO("MultiOptimisationObjective", "Clearance objective enabled!");
         }
         else
         {
-            std::cout<<"[GlobalPlanner::MultiCostObjective] Clearance objective disabled!\n";
+            INFO("MultiOptimisationObjective", "Clearance objective disabled!");
         }
         opt->setCostToGoHeuristic(ob::goalRegionCostToGo);
     

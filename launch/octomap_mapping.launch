@@ -8,18 +8,23 @@
 -->
 <launch>
 	<node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
-		<param name="resolution" value="0.20" />
+		<param name="resolution" value="0.30" />
 		
 		<!-- fixed map frame (set to 'map' if SLAM or localization running!) -->
 		<param name="frame_id" type="string" value="map" />
-		<param name="map_file" type="string" value="/home/kyouma/Downloads/forest0.bt" />
 
 		
 		<!-- maximum range to integrate (speedup!) -->
 		<!-- <param name="sensor_model/max_range" value="5.0" /> -->
 		
 		<!-- data source to integrate (PointCloud2) -->
-		<!-- <remap from="cloud_in" to="/velodyne_points" /> -->
+		<!-- <param name="map_file" type="string" value="/home/kyouma/Downloads/fr_campus.bt" /> -->
+		<!-- <remap from="cloud_in" to="/my_topic"/> -->
+		<!-- <remap from="cloud_in" to="/uav0/os_cloud_nodelet/points"/> -->
+		<remap from="cloud_in" to="/drone_0_pcl_render_node/cloud"/>
+
+		<remap from="octomap_binary" to="octomap"/>
+		
 	
 	</node>
 </launch>

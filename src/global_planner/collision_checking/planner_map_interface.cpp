@@ -3,7 +3,7 @@
 
 namespace mav_planning
 {
-    PlannerMapInterface::PlannerMapInterface(MapType type)
+    PlannerMapInterface::PlannerMapInterface(Type type)
     {
         _type = type;
     }
@@ -23,15 +23,25 @@ namespace mav_planning
         return _mav_shape;
     }
 
-    void PlannerMapInterface::updateMAVState(const ob::State* state)
+    void PlannerMapInterface::updateMAVState(const SE3State& state)
     {
-        _mav_shape.setTranslation(state->as<FlatMAVStateSpace::StateType>()->getXYZ());
-        _mav_shape.setOrientation(state->as<FlatMAVStateSpace::StateType>()->getYawAsQuat());
+        _mav_shape.setTranslation(state.position);
+        _mav_shape.setOrientation(state.rotation);
     }
 
-    PlannerMapInterface::MapType PlannerMapInterface::getMapType()
+    PlannerMapInterface::Type PlannerMapInterface::getType()
     {
         return _type;
+    }
+
+    void PlannerMapInterface::lockMap()
+    {
+        _map_locked = true;
+    }
+
+    void PlannerMapInterface::unlockMap()
+    {
+        _map_locked = false;
     }
 
 }

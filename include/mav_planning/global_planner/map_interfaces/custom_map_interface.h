@@ -9,34 +9,35 @@ namespace mav_planning
     class Custom3DMap: public PlannerMapInterface
     {   
         public:
-            Custom3DMap(void):PlannerMapInterface(MapType::CUSTOM3D){};
+            Custom3DMap(void):PlannerMapInterface(Type::CUSTOM3D){};
 
             ~Custom3DMap(void){};
 
             struct RandomMapParams{
                 int count;
-                float min_radius, max_radius;
+                double min_radius, max_radius;
             };
 
             void setMapBounds(const std::pair<Point, Point>& bounds);
             std::pair<Point, Point> getMapBounds();
             
             void addObstacle(const CollisionGeometry& obstacle);
-            void generateRandomMap(const RandomMapParams& params);
-            size_t getNumObstacles();
             std::vector<CollisionGeometry> getObstacles();
+            size_t getNumObstacles();
             void clearMap();
+            
+            void generateRandomMap(const RandomMapParams& params);
 
             // Overriden methods from PlannerMapInterface
-            bool checkCollision(const CollisionGeometry& shape);
-            float getMinClearance(const CollisionGeometry& shape);
+            bool checkCollision(const SE3State& state);
+            double getMinClearance(const SE3State& state);
 
             // void readFromFile(std::string filepath);
             void printMap(std::string dir);
         
         private:
+            std::string _name = "CustomMapInterface";
             std::vector<CollisionGeometry> _obstacles;
-
     };
 }
 

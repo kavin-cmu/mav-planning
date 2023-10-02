@@ -27,19 +27,19 @@ class FlatMAVStateSpace: public ob::CompoundStateSpace
             {}
 
             /** \brief Get the X component of the state */
-            float getX(void) const
+            double getX(void) const
             {
                 return as<ob::RealVectorStateSpace::StateType>(0)->values[0];
             }
 
             /** \brief Get the Y component of the state */
-            float getY(void) const
+            double getY(void) const
             {
                 return as<ob::RealVectorStateSpace::StateType>(0)->values[1];
             }
 
             /** \brief Get the Z component of the state */
-            float getZ(void) const
+            double getZ(void) const
             {
                 return as<ob::RealVectorStateSpace::StateType>(0)->values[2];
             }
@@ -52,7 +52,7 @@ class FlatMAVStateSpace: public ob::CompoundStateSpace
             /** \brief Get the yaw component of the state. This is
                 the rotation in plane, with respect to the Z
                 axis. */
-            float getYaw(void) const
+            double getYaw(void) const
             {
                 return as<ob::SO2StateSpace::StateType>(1)->value;
             }
@@ -78,19 +78,19 @@ class FlatMAVStateSpace: public ob::CompoundStateSpace
             }
 
             /** \brief Set the X component of the state */
-            void setX(float x)
+            void setX(double x)
             {
                 as<ob::RealVectorStateSpace::StateType>(0)->values[0] = x;
             }
 
             /** \brief Set the Y component of the state */
-            void setY(float y) 
+            void setY(double y) 
             {
                 as<ob::RealVectorStateSpace::StateType>(0)->values[1] = y;
             }
 
             /** \brief Set the Y component of the state */
-            void setZ(float z)
+            void setZ(double z)
             {
                 as<ob::RealVectorStateSpace::StateType>(0)->values[2] = z;
             }
@@ -105,10 +105,10 @@ class FlatMAVStateSpace: public ob::CompoundStateSpace
             /** \brief Set the yaw component of the state. This is
                 the rotation in plane, with respect to the Z
                 axis. */
-            void setYaw(float yaw)
+            void setYaw(double yaw)
             {
                 as<ob::SO2StateSpace::StateType>(1)->value = yaw;
-                float v = fmod(as<ob::SO2StateSpace::StateType>(1)->value, 2.0 * M_PI);
+                double v = fmod(as<ob::SO2StateSpace::StateType>(1)->value, 2.0 * M_PI);
                 if (v <= -M_PI)
                 {
                     v += 2.0 * M_PI;

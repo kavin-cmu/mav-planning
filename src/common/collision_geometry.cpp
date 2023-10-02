@@ -1,9 +1,9 @@
 #include <mav_planning/common/collision_geometry.h>
 
 namespace mav_planning {
-CollisionGeometry::CollisionGeometry(GeometryType type, Point position,
+CollisionGeometry::CollisionGeometry(Type type, Point position,
                                      Quaternion orientation,
-                                     std::vector<float> shape) {
+                                     std::vector<double> shape) {
 
   _type = type;
   _shape = shape;
@@ -11,94 +11,189 @@ CollisionGeometry::CollisionGeometry(GeometryType type, Point position,
   _orientation = orientation;
 
   switch (type) {
-  case GeometryType::SPHERE: {
-    _collision_obj = std::make_shared<fcl::CollisionObjectf>(
-        std::shared_ptr<fcl::CollisionGeometryf>(new fcl::Spheref(shape[0])));
+  case Type::SPHERE: {
+    _collision_obj = std::make_shared<fcl::CollisionObjectd>(
+        std::shared_ptr<fcl::CollisionGeometryd>(new fcl::Sphered(shape[0])));
     break;
   }
 
-  case GeometryType::BOX: {
-    _collision_obj = std::make_shared<fcl::CollisionObjectf>(
-        std::shared_ptr<fcl::CollisionGeometryf>(
-            new fcl::Boxf(shape[0], shape[1], shape[2])));
+  case Type::BOX: {
+    _collision_obj = std::make_shared<fcl::CollisionObjectd>(
+        std::shared_ptr<fcl::CollisionGeometryd>(
+            new fcl::Boxd(shape[0], shape[1], shape[2])));
     break;
   }
 
-  case GeometryType::CYLINDER: {
-    _collision_obj = std::make_shared<fcl::CollisionObjectf>(
-        std::shared_ptr<fcl::CollisionGeometryf>(
-            new fcl::Cylinderf(shape[0], shape[1])));
+  case Type::CYLINDER: {
+    _collision_obj = std::make_shared<fcl::CollisionObjectd>(
+        std::shared_ptr<fcl::CollisionGeometryd>(
+            new fcl::Cylinderd(shape[0], shape[1])));
     break;
   }
 
-  case GeometryType::ELLIPSOID: {
-    _collision_obj = std::make_shared<fcl::CollisionObjectf>(
-        std::shared_ptr<fcl::CollisionGeometryf>(
-            new fcl::Ellipsoidf(shape[0], shape[1], shape[2])));
+  case Type::ELLIPSOID: {
+    _collision_obj = std::make_shared<fcl::CollisionObjectd>(
+        std::shared_ptr<fcl::CollisionGeometryd>(
+            new fcl::Ellipsoidd(shape[0], shape[1], shape[2])));
     break;
   }
 
   default: {
-    std::cout << "[CollisionGeometry] Incompatible Obstacle type provided!";
+    ERROR("CollisionGeometry","Incompatible Obstacle type provided!");
     break;
   }
   }
-
-  _collision_obj->setTranslation(position.cast<float>());
-  _collision_obj->setQuatRotation(orientation.cast<float>());
+  if(!_collision_obj)
+  {
+    _collision_obj->setTranslation(position.cast<double>());
+    _collision_obj->setQuatRotation(orientation.cast<double>());
+  }
 }
 
 CollisionGeometry::CollisionGeometry() {}
 
+// CollisionGeometry::CollisionGeometry(CollisionGeometry& other)
+// {
+//   _type = other.getType();
+//   _shape = other.getShape();
+//   _position = other.getTranslation();
+//   _orientation = other.getOrientation();
+//   _collision_obj = other.getCollisionObject();
+  
+// }
+
 void CollisionGeometry::setTranslation(const Point &position) {
   _position = position;
-  _collision_obj->setTranslation(position.cast<float>());
+  _collision_obj->setTranslation(position.cast<double>());
 }
 
 void CollisionGeometry::setOrientation(const Quaternion &orientation) {
   _orientation = orientation;
-  _collision_obj->setQuatRotation(orientation.cast<float>());
+  _collision_obj->setQuatRotation(orientation.cast<double>());
 }
 
 Point CollisionGeometry::getTranslation() const { return _position; }
 
 Quaternion CollisionGeometry::getOrientation() const { return _orientation; }
 
-std::shared_ptr<fcl::CollisionObjectf>
-CollisionGeometry::getCollisionObject() const {
+std::shared_ptr<fcl::CollisionObjectd> CollisionGeometry::getCollisionObject() const 
+{
   return _collision_obj;
 }
 
-CollisionGeometry::GeometryType CollisionGeometry::getType() const {
+CollisionGeometry::Type CollisionGeometry::getType() const 
+{
   return _type;
 }
 
-std::vector<float> CollisionGeometry::getShape() const { return _shape; }
+std::vector<double> CollisionGeometry::getShape() const { return _shape; }
 
-void CollisionGeometry::print(std::ostream &out) const {
-  std::string delim_lvl1 = " | ", delim_lvl2 = " , ";
+std::vector<Point> CollisionGeometry::getAABBoxVerts(fcl::AABBd& aabb)
+{
+  Eigen::Vector3d extent = {0.5*aabb.width(), 0.5*aabb.depth(), 0.5*aabb.height()};
+  std::vector<Point> verts(8);
+  
+  verts[0] = { - extent[0], + extent[1], + extent[2] };
+  verts[1] = { + extent[0], + extent[1], + extent[2] };
+  verts[2] = { - extent[0], - extent[1], + extent[2] };
+  verts[3] = { + extent[0], - extent[1], + extent[2] };
+  verts[4] = { - extent[0], + extent[1], - extent[2] };
+  verts[5] = { + extent[0], + extent[1], - extent[2] };
+  verts[6] = { - extent[0], - extent[1], - extent[2] };
+  verts[7] = { + extent[0], - extent[1], - extent[2] };
 
-  out << std::setprecision(3);
+  
+  return verts;
 
-  for (size_t i = 0; i < 3; i++) {
-    out << _position[i];
+}
 
-    if (i < 2) {
-      out << delim_lvl2;
+AABBox CollisionGeometry::getAABB()
+{ 
+  // Get local AABB
+  fcl::AABBd local_aabb = _collision_obj->getCollisionGeometry()->aabb_local;
+  
+  // Obtain its attributes
+  Eigen::Vector3d extent = {0.5*local_aabb.width(), 0.5*local_aabb.depth(), 0.5*local_aabb.height()};
+  fcl::Matrix3d rot = _collision_obj->getRotation().matrix();
+  Point trans = _collision_obj->getTranslation();
+
+  std::vector<Point> verts_local(8), verts(8);
+  
+  // calculate its verts
+  verts_local = getAABBoxVerts(local_aabb);
+
+  Eigen::Vector3d max_val = -Eigen::Vector3d::Constant(std::numeric_limits<double>::max());
+  Eigen::Vector3d min_val = Eigen::Vector3d::Constant(std::numeric_limits<double>::max());
+
+
+  for (int i=0; i<8; i++)
+  { 
+    // transform its verts to global frame
+    verts[i] = trans + rot*verts_local[i];
+    
+    // keep track of max and min coordinates of its verts
+    for(int j=0; j<3; j++)
+    {
+      if(min_val[j]>verts[i][j])
+      {
+        min_val[j] = verts[i][j];
+      }
+      if(max_val[j]<verts[i][j])
+      {
+        max_val[j] = verts[i][j];
+      }
     }
   }
 
-  out << delim_lvl1;
-  out << _orientation.x() << delim_lvl2 << _orientation.y() << delim_lvl2
-      << _orientation.z() << delim_lvl2 << _orientation.w();
-  out << delim_lvl1;
-  out << _type << delim_lvl1;
+  // store min-max values
+  AABBox bbx;
+  bbx.min = min_val;
+  bbx.max = max_val;
 
-  for (size_t i = 0; i < _shape.size(); i++) {
+  return bbx;
+
+}
+
+fcl::OBBd CollisionGeometry::getOBB()
+{
+  fcl::AABBd aabb = _collision_obj->getCollisionGeometry()->aabb_local;
+  
+  Eigen::Vector3d extent = {0.5*aabb.width(), 0.5*aabb.depth(), 0.5*aabb.height()};
+  fcl::Matrix3d rot = _collision_obj->getRotation();
+  fcl::Vector3d trans = 0.0*aabb.center()+_collision_obj->getTranslation();
+
+  return fcl::OBBd(rot, trans, extent);
+}
+
+void CollisionGeometry::print(std::ostream &out) const 
+{
+  std::string attr_delim = " | ", value_delim = " , ";
+
+  out << std::setprecision(3);
+
+  for (size_t i = 0; i < 3; i++) 
+  {
+    out << _position[i];
+
+    if (i < 2) 
+    {
+      out << value_delim;
+    }
+  }
+
+  out << attr_delim;
+  out << _orientation.x() << value_delim << _orientation.y() << value_delim
+      << _orientation.z() << value_delim << _orientation.w();
+  out << attr_delim;
+  out << _type << attr_delim;
+
+  for (size_t i = 0; i < _shape.size(); i++) 
+  {
     out << _shape[i];
 
-    if (i < _shape.size() - 1) {
-      out << delim_lvl2;
+    if (i < _shape.size() - 1) 
+    {
+      out << value_delim;
     }
   }
   out << "\n";
